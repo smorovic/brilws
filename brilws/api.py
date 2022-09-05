@@ -1038,7 +1038,7 @@ def unpackBlobtoArray(iblob,itemtypecode):
     #blobstr=iblob.readline()????
     if not iblob :
         return None
-    result.fromstring(iblob)
+    result.frombytes(iblob)
     return result
 
 def packListstrtoCLOB(iListstr,separator=','):

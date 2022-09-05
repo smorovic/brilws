@@ -20,6 +20,7 @@ from sqlalchemy import *
 import math
 from dateutil import tz
 import pytz
+import decimal
 
 try:
     from itertools import zip_longest
@@ -34,7 +35,7 @@ ch.setFormatter(logformatter)
 log.addHandler(ch)
 
 lumip = lumiParameters.ParametersObject()
-lslengthsec= lumip.lslengthsec
+lslengthsec= decimal.Decimal(lumip.lslengthsec)
 utctmzone = tz.gettz('UTC')
 cerntmzone = tz.gettz('CEST')
 
@@ -57,10 +58,12 @@ def xing_indexfilter(arr,constfactor=1.,xingMin=0.,xingTr=0.,xingId=[]):
     vidx = None
     if(xingMin is None):
         xingMin = float('-inf')
+    xingMin = decimal.Decimal(xingMin)
+    constfactor = decimal.Decimal(constfactor)
     if xingTr:        
         vidx = np.argwhere( np.logical_and( (arr*constfactor)>xingMin, arr>xingTr*np.max(arr) ) ).ravel()
     else:        
-        vidx = np.argwhere( (arr*constfactor)>xingMin ).ravel()
+        vidx = np.argwhere(arr*float(constfactor)>float(xingMin)).ravel()
     if xingId :
         posidx = np.array(xingId)-1 #array position index is bunch index - 1
         return np.intersect1d(np.array(posidx),vidx)    
@@ -124,14 +127,20 @@ def totalprescale(hltprescval,l1seedlogic,l1prescvals):
         totpresc = hltprescval*np.max(l1prescvals)    
     return totpresc
 
+<<<<<<< HEAD
 def lumi_per_normtag(shards,lumiquerytype,dbengine,dbschema,runtot,formatter,datasource=None,normtag=None,withBX=False,byls=None,fh=None,csvwriter=None,ptable=None,scalefactor=1,totz=utctmzone,fillmin=None,fillmax=None,runmin=None,runmax=None,amodetagid=None,egev=None,beamstatusid=None,tssecmin=None,tssecmax=None,runlsSeries=None,hltl1map={},ignorel1mask=False,xingMin=0.,xingTr=0.,xingId=[],checkjson=False,datatagnameid=None,withfileinput = False,dataset=None):
    
+=======
+def lumi_per_normtag(shards,lumiquerytype,dbengine,dbschema,runtot,formatter,datasource=None,normtag=None,withBX=False,byls=None,fh=None,csvwriter=None,ptable=None,scalefactor=1,totz=utctmzone,fillmin=None,fillmax=None,runmin=None,runmax=None,amodetagid=None,egev=None,beamstatusid=None,tssecmin=None,tssecmax=None,runlsSeries=None,hltl1map={},ignorel1mask=False,xingMin=0.,xingTr=0.,xingId=[],checkjson=False,datatagnameid=None,withfileinput = False):
+    scalefactor = decimal.Decimal(scalefactor)
+    #scalefactor = float(scalefactor)
+>>>>>>> a606484 (fixing syntax issue with python version 3.9 and libraryes in CMSSW_12_4_8)
     if withfileinput:
         from brilws import fileapi
 
     validitychecker = None
     lastvalidity = None
-    if normtag and normtag is not 'withoutcorrection':
+    if normtag and normtag != 'withoutcorrection':
         normdata = api.iov_gettagdata(dbengine, normtag,schemaname=dbschema)
         if not normdata: raise ValueError('normtag %s does not exist'%normtag)
         validitychecker = ValidityChecker(normdata)
@@ -255,7 +264,7 @@ def lumi_per_normtag(shards,lumiquerytype,dbengine,dbschema,runtot,formatter,dat
                 ds = 'UNKNOWN' 
                 if 'datasource' in row and row['datasource']:
                     ds = row['datasource']
-                livefrac = np.true_divide(recorded,delivered)
+                livefrac = np.true_divide(decimal.Decimal(recorded),decimal.Decimal(delivered))
                 if withBX:    #--xing
                     bxlumi = None
                     bxlumistr = '[]'
@@ -268,8 +277,8 @@ def lumi_per_normtag(shards,lumiquerytype,dbengine,dbschema,runtot,formatter,dat
                         totfactor = np.true_divide(lslengthsec,scalefactor)
                         bxidx = xing_indexfilter(bxdeliveredarray,constfactor=totfactor,xingMin=xingMin,xingTr=xingTr,xingId=xingId)
                         if bxidx is not None and bxidx.size>0:
-                            bxdelivered = bxdeliveredarray[bxidx]*totfactor
-                            bxlumi = np.transpose( np.array([bxidx+1,bxdelivered,bxdelivered*livefrac]) )
+                            bxdelivered = bxdeliveredarray[bxidx]*float(totfactor)
+                            bxlumi = np.transpose( np.array([bxidx+1,bxdelivered,bxdelivered*float(livefrac)]) )
                         del bxdeliveredarray
                         del bxidx
                         if hltl1map: #--hltpath bx display
@@ -362,7 +371,7 @@ def lumi_per_normtag(shards,lumiquerytype,dbengine,dbschema,runtot,formatter,dat
                 runtot[ ('',runnum)]['nls']+=1                
                 if cmson: runtot[ ('',runnum) ]['ncms']+=1
                 runtot[ ('',runnum) ]['delivered']+=delivered
-                runtot[ ('',runnum) ]['recorded']+=recorded                                
+                runtot[ ('',runnum) ]['recorded']+=decimal.Decimal(recorded)
             else:                #hltpath statistic collect
                 if not cmson:
                     continue
